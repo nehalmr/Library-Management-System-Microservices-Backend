@@ -46,7 +46,7 @@ This is a comprehensive Library Management System built using Java Spring Boot w
 
 ```mermaid
 graph TD
-    A[API Gateway (8080)] -->|REST| B(Book Service 8081)
+    A[API Gateway 8080] -->|REST| B(Book Service 8081)
     A -->|REST| C(Member Service 8082)
     A -->|REST| D(Transaction Service 8083)
     A -->|REST| E(Fine Service 8084)
