@@ -2,28 +2,31 @@
 
 This is a comprehensive Library Management System built using Java Spring Boot with microservices architecture. The system allows users to manage book collections, member registrations, borrowing and returning of books, and overdue tracking.
 
-## Architecture Overview
+---
 
-The system follows a microservices architecture with the following services:
+## Table of Contents
+1. [Project Overview](#project-overview)
+2. [Architecture Diagram](#architecture-diagram)
+3. [Microservices & Responsibilities](#microservices--responsibilities)
+4. [Database Schema & Entities](#database-schema--entities)
+5. [API Endpoints](#api-endpoints)
+6. [Setup Instructions](#setup-instructions)
+7. [Configuration & Environment](#configuration--environment)
+8. [Production-Ready Features](#production-ready-features)
+9. [Inter-Service Communication](#inter-service-communication)
+10. [Health Checks & Observability](#health-checks--observability)
+11. [Error Handling & Validation](#error-handling--validation)
+12. [Caching, Async, and Scheduled Tasks](#caching-async-and-scheduled-tasks)
+13. [Email/Notification Flow](#emailnotification-flow)
+14. [Deployment & Production Best Practices](#deployment--production-best-practices)
+15. [API Documentation](#api-documentation)
+16. [Contributing](#contributing)
+17. [License](#license)
 
-### Services
-1. **API Gateway** (Port 8080) - Routes requests to appropriate microservices
-2. **Book Service** (Port 8081) - Manages book collection and inventory
-3. **Member Service** (Port 8082) - Handles member registration and profiles
-4. **Transaction Service** (Port 8083) - Manages borrowing and returning processes
-5. **Fine Service** (Port 8084) - Tracks overdue books and manages fines
-6. **Notification Service** (Port 8085) - Sends notifications and alerts via email
+---
 
-### Key Features
-- **Book Management**: Add, update, delete, and search books
-- **Member Management**: Register members, update profiles, manage membership status
-- **Borrowing System**: Borrow and return books with due date tracking
-- **Fine Management**: Automatic fine calculation for overdue books
-- **Notifications**: Alerts for due dates, overdue books, and fines
-- **Service Discovery**: Using Netflix Eureka
-- **API Gateway**: Centralized routing and load balancing
+## Project Overview
 
-## Technology Stack
 - **Framework**: Spring Boot 3.2.0
 - **Java Version**: JDK 21
 - **Database**: MySQL 8.0
@@ -37,81 +40,79 @@ The system follows a microservices architecture with the following services:
 - **Validation**: Bean Validation
 - **Build Tool**: Maven
 
-## Database Schema
+---
 
-Each microservice has its own database:
+## Architecture Diagram
 
-### Book Service Database
-- **books**: Stores book information (title, author, genre, ISBN, availability)
+```mermaid
+graph TD
+    A[API Gateway (8080)] -->|REST| B(Book Service 8081)
+    A -->|REST| C(Member Service 8082)
+    A -->|REST| D(Transaction Service 8083)
+    A -->|REST| E(Fine Service 8084)
+    A -->|REST| F(Notification Service 8085)
+    B <--> G[(Book DB)]
+    C <--> H[(Member DB)]
+    D <--> I[(Transaction DB)]
+    E <--> J[(Fine DB)]
+    F <--> K[(Notification DB)]
+    A --> L[Eureka Server 8761]
+    B --> L
+    C --> L
+    D --> L
+    E --> L
+    F --> L
+```
 
-### Member Service Database  
-- **members**: Stores member information (name, email, phone, address, status)
+- **API Gateway**: Central entry point, routing, load balancing, security
+- **Eureka Server**: Service discovery
+- **Each Service**: Own DB, isolated domain logic
+- **Inter-service**: REST (OpenFeign), async (future: events)
 
-### Transaction Service Database
-- **borrowing_transactions**: Tracks borrowing and return transactions
+---
 
-### Fine Service Database
-- **fines**: Manages fine records for overdue books
+## Microservices & Responsibilities
 
-### Notification Service Database
-- **notifications**: Stores notification records
+| Service              | Port  | Responsibilities                                    |
+|----------------------|-------|-----------------------------------------------------|
+| API Gateway          | 8080  | Routing, security, Swagger aggregation              |
+| Book Service         | 8081  | Book CRUD, search, inventory                        |
+| Member Service       | 8082  | Member CRUD, status, profile                        |
+| Transaction Service  | 8083  | Borrow/return, due/overdue, transaction history     |
+| Fine Service         | 8084  | Fine calculation, payment, overdue tracking         |
+| Notification Service | 8085  | Email/SMS, reminders, alerts, notification history  |
+| Eureka Server        | 8761  | Service registry/discovery                          |
 
-## Getting Started
+---
 
-### Prerequisites
-- Java 21 or higher
-- Maven 3.9+
-- MySQL 8.0+
-- SMTP Server configuration (for email notifications)
+## Database Schema & Entities
 
-### Setup Instructions
+### Book Service (`book_service_db`)
+- **books**
+  | id | title | author | genre | isbn | year_published | available_copies | total_copies |
+  |----|-------|--------|-------|------|---------------|------------------|--------------|
 
-1. **Database Setup**
-   \`\`\`bash
-   # Run the SQL scripts to create databases and tables
-   mysql -u root -p < scripts/01-create-databases.sql
-   mysql -u root -p < scripts/02-seed-data.sql
-   \`\`\`
+### Member Service (`member_service_db`)
+- **members**
+  | id | name | email | phone | address | membership_status |
+  |----|------|-------|-------|---------|------------------|
 
-2. **Start Eureka Server**
-   - Download and start Netflix Eureka Server on port 8761
-   - Or use Spring Cloud Eureka Server starter
+### Transaction Service (`transaction_service_db`)
+- **borrowing_transactions**
+  | id | member_id | book_id | borrow_date | due_date | return_date | status |
+  |----|-----------|---------|------------|----------|-------------|--------|
 
-3. **Configure Database Connection**
-   - Update database credentials in each service's `application.yml`
-   - Default: username=root, password=password
+### Fine Service (`fine_service_db`)
+- **fines**
+  | id | member_id | transaction_id | amount | status | issued_date | paid_date |
+  |----|-----------|----------------|--------|--------|-------------|----------|
 
-4. **Start Services**
+### Notification Service (`notification_service_db`)
+- **notifications**
+  | id | member_id | message | type | status | recipient_email | subject | created_at |
+  |----|-----------|---------|------|--------|----------------|---------|------------|
 
-5. **Start Eureka Server**
-   \`\`\`bash
-   cd eureka-server && mvn spring-boot:run
-   \`\`\`
-
-6. **Configure Email Settings (Optional)**
-   - Update notification-service application.yml with your SMTP settings
-   - Set environment variables: MAIL_USERNAME and MAIL_PASSWORD
-   \`\`\`bash
-   # Start services in this order
-   cd eureka-server && mvn spring-boot:run
-   cd api-gateway && mvn spring-boot:run
-   cd book-service && mvn spring-boot:run  
-   cd member-service && mvn spring-boot:run
-   cd transaction-service && mvn spring-boot:run
-   cd fine-service && mvn spring-boot:run
-   cd notification-service && mvn spring-boot:run
-   \`\`\`
-
-## API Documentation
-
-Each service provides comprehensive API documentation using OpenAPI 3.0 (Swagger):
-
-- **API Gateway Swagger UI**: http://localhost:8080/swagger-ui.html
-- **Book Service**: http://localhost:8081/swagger-ui.html
-- **Member Service**: http://localhost:8082/swagger-ui.html
-- **Transaction Service**: http://localhost:8083/swagger-ui.html
-- **Fine Service**: http://localhost:8084/swagger-ui.html
-- **Notification Service**: http://localhost:8085/swagger-ui.html
+---
 
 ## API Endpoints
 
@@ -155,62 +156,174 @@ Each service provides comprehensive API documentation using OpenAPI 3.0 (Swagger
 - `POST /api/notifications/fine-notice` - Create fine notice
 - `GET /api/notifications/stats` - Get notification statistics
 
-## Business Rules
+#### Example: Get Book by ID
+```http
+GET /api/books/1
+Response: 200 OK
+{
+  "id": 1,
+  "title": "The White Tiger",
+  "author": "Aravind Adiga",
+  "genre": "Fiction",
+  "isbn": "978-1-4165-6259-7",
+  "year_published": 2008,
+  "available_copies": 5,
+  "total_copies": 5
+}
+```
 
-1. **Borrowing Limits**: Members can borrow maximum 5 books at a time
-2. **Borrowing Period**: Default borrowing period is 14 days
-3. **Fine Calculation**: $1.00 per day for overdue books
-4. **Book Availability**: System automatically manages book availability
-5. **Member Status**: Only ACTIVE members can borrow books
+---
 
-## Microservices Communication
+## Setup Instructions
 
-- **Synchronous**: REST API calls using OpenFeign clients
-- **Service Discovery**: Netflix Eureka for service registration and discovery
-- **Load Balancing**: Client-side load balancing through Ribbon
-- **Circuit Breaker**: Can be implemented using Hystrix or Resilience4j
+### Prerequisites
+- Java 21 or higher
+- Maven 3.9+
+- MySQL 8.0+
+- SMTP Server configuration (for email notifications)
 
-## Monitoring and Health Checks
+### Database Setup
+```bash
+# Run the SQL scripts to create databases and tables
+mysql -u root -p < scripts/01-create-databases.sql
+mysql -u root -p < scripts/02-seed-data.sql
+```
 
-Each service exposes actuator endpoints:
-- `/actuator/health` - Health check
-- `/actuator/info` - Service information
+### Start Eureka Server
+- Download and start Netflix Eureka Server on port 8761
+- Or use Spring Cloud Eureka Server starter
 
-## New Features (JDK 21 Enhanced)
+### Configure Database Connection
+- Update database credentials in each service's `application.yml`
+- Default: username=root, password=password
 
-### 🚀 **Enhanced Backend Features**
-- **OpenAPI 3.0 Documentation** - Complete API documentation with Swagger UI
-- **Eureka Service Discovery** - Centralized service registry and discovery
-- **Email Notifications** - HTML email templates with Thymeleaf
-- **Caching Layer** - Caffeine cache for improved performance
-- **Async Processing** - Asynchronous notification processing
-- **Scheduled Tasks** - Automated overdue processing and reminders
-- **Global Exception Handling** - Consistent error responses across services
-- **Health Checks & Metrics** - Comprehensive monitoring endpoints
+### Start Services
+```bash
+# Start services in this order
+cd eureka-server && mvn spring-boot:run
+cd api-gateway && mvn spring-boot:run
+cd book-service && mvn spring-boot:run  
+cd member-service && mvn spring-boot:run
+cd transaction-service && mvn spring-boot:run
+cd fine-service && mvn spring-boot:run
+cd notification-service && mvn spring-boot:run
+```
 
-### 📧 **Notification System**
-- **Email Templates** - Professional HTML email templates
-- **Retry Mechanism** - Failed notification retry with exponential backoff
-- **Notification Types** - Due reminders, overdue alerts, fine notices
-- **Statistics Dashboard** - Notification metrics and analytics
-- **Async Processing** - Non-blocking notification delivery
+### Configure Email Settings (Optional)
+- Update notification-service application.yml with your SMTP settings
+- Set environment variables: MAIL_USERNAME and MAIL_PASSWORD
 
-### 🔧 **Technical Enhancements**
-- **JDK 21 Compatibility** - Latest Java features and performance improvements
-- **Enhanced Security** - CORS configuration and security headers
-- **Improved Logging** - Structured logging with correlation IDs
-- **Configuration Management** - Externalized configuration with profiles
-- **Database Optimization** - Connection pooling and query optimization
+### Automated Startup
+- Use `scripts/start-services.sh` to initialize DB, start all services, and check health.
 
-## Future Enhancements
+---
 
-1. **Authentication & Authorization**: JWT-based security
-2. **Event-Driven Architecture**: Message queues for async communication
-3. **Caching**: Redis for improved performance
-4. **Monitoring**: ELK stack for logging and monitoring
-5. **Containerization**: Docker and Kubernetes deployment
-6. **Frontend**: Angular/React web application
-7. **Mobile App**: Native mobile applications
+## Configuration & Environment
+
+- **Database**: Set DB credentials in each service's `application.yml`
+- **Email**: Set `MAIL_USERNAME` and `MAIL_PASSWORD` as env vars for notification-service
+- **Ports**: Each service runs on a fixed port (see above)
+- **Profiles**: Use `dev`, `prod` profiles for environment-specific config
+- **Startup**: Use `scripts/start-services.sh` for full stack startup (see logs/ for output)
+
+---
+
+## Production-Ready Features
+
+- **Service Discovery**: Netflix Eureka
+- **API Gateway**: Spring Cloud Gateway (rate limiting, CORS, security headers)
+- **Database**: MySQL 8.0, connection pooling, separate DB per service
+- **ORM**: Spring Data JPA, schema auto-migration
+- **Caching**: Caffeine (in-memory)
+- **Async Processing**: @Async, scheduled jobs for reminders
+- **Email**: Spring Mail + Thymeleaf, SMTP config via env vars
+- **Validation**: Bean Validation (JSR-380)
+- **API Docs**: OpenAPI 3.0 (Swagger UI per service)
+- **Monitoring**: Spring Boot Actuator, `/actuator/health`, `/actuator/info`
+- **Logging**: Structured logs, correlation IDs, logback config
+- **Error Handling**: Global exception handler, consistent error responses
+- **Security**: CORS, security headers, (future: JWT auth)
+- **Config Management**: Externalized via `application.yml`, profiles, env vars
+- **Observability**: Health, metrics, logs, future: distributed tracing
+
+---
+
+## Inter-Service Communication
+
+- **Synchronous**: REST via OpenFeign clients
+- **Service Discovery**: Eureka registry
+- **Load Balancing**: Ribbon (client-side)
+- **Error Handling**: Circuit breaker (future: Resilience4j)
+- **Async**: Scheduled jobs for reminders, future: event-driven (Kafka/RabbitMQ)
+
+---
+
+## Health Checks & Observability
+
+- **Actuator Endpoints**: `/actuator/health`, `/actuator/info`, `/actuator/metrics`
+- **Service Health**: Checked by startup script and via Eureka
+- **Logging**: All logs in `logs/` directory, per-service log files
+- **Monitoring**: Ready for integration with ELK, Prometheus, Grafana
+
+---
+
+## Error Handling & Validation
+
+- **Global Exception Handler**: Consistent error format
+- **Validation**: Request body/params validated, errors returned as 400
+- **Sample Error Response**:
+```json
+{
+  "timestamp": "2025-06-18T12:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed: title must not be blank",
+  "path": "/api/books"
+}
+```
+
+---
+
+## Caching, Async, and Scheduled Tasks
+
+- **Caching**: Caffeine for book/member lookups
+- **Async**: Notification sending, scheduled reminders
+- **Scheduled**: Overdue checks, fine calculation, daily reminders
+
+---
+
+## Email/Notification Flow
+
+- **Templates**: HTML via Thymeleaf (`notification-service/resources/templates/`)
+- **Types**: Welcome, due reminder, overdue alert, fine notice
+- **Retry**: Failed notifications retried with exponential backoff
+- **Stats**: `/api/notifications/stats` for analytics
+
+---
+
+## Deployment & Production Best Practices
+
+- **Build**: Maven, multi-module
+- **Run**: `scripts/start-services.sh` (handles DB, logs, health checks)
+- **Logs**: Per-service, rotate and monitor
+- **Security**: Use strong DB/email passwords, restrict ports, enable HTTPS in prod
+- **Scaling**: Each service can be scaled independently
+- **Future**: Docker/K8s, CI/CD, JWT auth, distributed tracing
+
+---
+
+## API Documentation
+
+Each service provides comprehensive API documentation using OpenAPI 3.0 (Swagger):
+
+- **API Gateway Swagger UI**: http://localhost:8080/swagger-ui.html
+- **Book Service**: http://localhost:8081/swagger-ui.html
+- **Member Service**: http://localhost:8082/swagger-ui.html
+- **Transaction Service**: http://localhost:8083/swagger-ui.html
+- **Fine Service**: http://localhost:8084/swagger-ui.html
+- **Notification Service**: http://localhost:8085/swagger-ui.html
+
+---
 
 ## Contributing
 
@@ -219,6 +332,8 @@ Each service exposes actuator endpoints:
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
+
+---
 
 ## License
 
