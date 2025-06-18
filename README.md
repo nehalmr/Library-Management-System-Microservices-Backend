@@ -1,6 +1,6 @@
 # Library Management System - Microservices Architecture
 
-This is a comprehensive Library Management System built using Java Spring Boot with microservices architecture. The system allows users to manage book collections, member registrations, borrowing and returning of books, and overdue tracking.
+This is a comprehensive Library Management System built using Java Spring Boot with a microservices architecture. The system allows users to manage book collections, member registrations, book borrowing and return, and overdue tracking.
 
 ---
 
@@ -337,4 +337,4 @@ Each service provides comprehensive API documentation using OpenAPI 3.0 (Swagger
 
 ## License
 
-This project is licensed under the MIT License.
+This open-source project is available under the [MIT License](LICENSE).
