@@ -195,7 +195,7 @@ mysql -u root -p < scripts/02-seed-data.sql
 
 ### Configure Database Connection
 - Update database credentials in each service's `application.yml`
-- Default: username=root, password=password
+- Default: username=root, password=root
 
 ### Start Services
 ```bash
@@ -301,14 +301,38 @@ cd notification-service && mvn spring-boot:run
 
 ---
 
-## Deployment & Production Best Practices
+## Development Helper Script
 
-- **Build**: Maven, multi-module
-- **Run**: `scripts/start-services.sh` (handles DB, logs, health checks)
-- **Logs**: Per-service, rotate and monitor
-- **Security**: Use strong DB/email passwords, restrict ports, enable HTTPS in prod
-- **Scaling**: Each service can be scaled independently
-- **Future**: Docker/K8s, CI/CD, JWT auth, distributed tracing
+A single script is provided to manage database setup and all microservices for local development:
+
+```bash
+./scripts/lms-dev.sh [init-db|start|stop|run <service-folder>]
+```
+
+**Commands:**
+- `init-db` — Initialize and seed all MySQL databases (requires MySQL running and credentials in the script).
+- `start` — Start all services (loads .env from each service folder, logs output to `logs/`).
+- `stop` — Stop all running services by port.
+- `run <service-folder>` — Run a single service (loads .env if present in the service folder).
+
+**Examples:**
+```bash
+# Initialize databases
+./scripts/lms-dev.sh init-db
+
+# Start all services
+./scripts/lms-dev.sh start
+
+# Stop all services
+./scripts/lms-dev.sh stop
+
+# Run only the book-service
+./scripts/lms-dev.sh run book-service
+```
+
+- Make the script executable if needed: `chmod +x scripts/lms-dev.sh`
+- Ensure you have a `.env` file in each service folder for environment-based configuration.
+- Logs for each service are saved in the `logs` directory.
 
 ---
 
@@ -338,3 +362,7 @@ Each service provides comprehensive API documentation using OpenAPI 3.0 (Swagger
 ## License
 
 This open-source project is available under the [MIT License](LICENSE).
+
+---
+
+
