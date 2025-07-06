@@ -214,7 +214,7 @@ cd notification-service && mvn spring-boot:run
 - Set environment variables: MAIL_USERNAME and MAIL_PASSWORD
 
 ### Automated Startup
-- Use `scripts/start-services.sh` to initialize DB, start all services, and check health.
+- Use `scripts/lms-dev.sh` to initialize DB, start all services, and check health.
 
 ---
 
