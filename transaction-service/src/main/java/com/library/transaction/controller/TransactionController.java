@@ -64,7 +64,7 @@ public class TransactionController {
     public ResponseEntity<?> returnBook(@PathVariable Long id) {
         try {
             return transactionService.returnBook(id)
-                    .map(transaction -> ResponseEntity.ok(transaction))
+                    .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

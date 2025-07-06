@@ -91,9 +91,7 @@ public class TransactionService {
 
                     // Update book availability
                     try {
-                        bookServiceClient.updateBookAvailability(
-                                transaction.getBookId(), 
-                                Map.of("change", 1));
+                        bookServiceClient.updateBookAvailability(transaction.getBookId(), Map.of("change", 1));
                     } catch (Exception e) {
                         throw new RuntimeException("Unable to update book availability: " + e.getMessage());
                     }

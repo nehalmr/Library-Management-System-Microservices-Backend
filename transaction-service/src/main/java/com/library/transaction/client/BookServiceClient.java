@@ -10,9 +10,9 @@ import java.util.Map;
 
 @FeignClient(name = "book-service")
 public interface BookServiceClient {
-    
     @PutMapping("/api/books/{id}/availability")
     ResponseEntity<Map<String, String>> updateBookAvailability(
             @PathVariable("id") Long bookId, 
-            @RequestBody Map<String, Integer> request);
+            @RequestBody Map<String, Integer> request
+    );
 }
