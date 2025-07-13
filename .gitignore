@@ -2,7 +2,14 @@
 target/
 
 # Ignore logs directory
-logs/*.log
+logs/
+api-gateway/logs/
+book-service/logs/
+eureka-server/logs/
+fine-service/logs/
+member-service/logs/
+notification-service/logs/
+transaction-service/logs/
 
 # Ignore IDE files
 *.iml
